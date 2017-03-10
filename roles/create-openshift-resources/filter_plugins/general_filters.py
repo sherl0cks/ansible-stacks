@@ -10,6 +10,7 @@ def create_key_value_pairs_string(key_value_pairs):
             string += ','
     return string
 
+
 def create_param_string(key_value_pairs):
     pairs = []
     string = ""
@@ -17,14 +18,26 @@ def create_param_string(key_value_pairs):
         pair = key + '=' + key_value_pairs[key]
         pairs.append(pair)
     for i, pair in enumerate(pairs):
-        string += '-p ' + pair
+        string += ' -p ' + pair
+    return string
+
+
+def create_env_string(key_value_pairs):
+    pairs = []
+    string = ""
+    for key in key_value_pairs:
+        pair = key + '=' + key_value_pairs[key]
+        pairs.append(pair)
+    for i, pair in enumerate(pairs):
+        string += ' -e ' + pair
     return string
 
 
 class FilterModule(object):
-    ''' A set of general filters to support OpenShift CLI'''
+    ''' A set of general filters to support OpenShift CLI '''
     def filters(self):
         return {
             'key_value_pairs_string': create_key_value_pairs_string,
-            'param_string' : create_param_string
+            'oc_param_string': create_param_string,
+            'oc_env_string': create_env_string
         }

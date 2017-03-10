@@ -13,8 +13,8 @@
               {
                 "name": "jenkins-s2i",
                 "parameters": {
-                  "SOURCE_REPOSITORY_URL": "https://github.com/sherl0cks/openshift-jenkins-s2i-config.git",
-                  "SOURCE_REPOSITORY_REF": "jenkins-2",
+                  "SOURCE_REPOSITORY_URL": "https://github.com/rht-labs/openshift-jenkins-s2i-config.git",
+                  "SOURCE_REPOSITORY_REF": "master",
                   "NAME": "jenkins"
                 }
               },
