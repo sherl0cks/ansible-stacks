@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
-import subprocess
-import time
-
+from ansible.module_utils.basic import *
 
 ######################################################################
 # Image Streams
 ######################################################################
 
+
+# TODO return whether image was tagged or not?
 def promote_image(src_project_name, src_imagestream, src_imagestream_tag, dst_project_name, dst_imagestream=None, dst_imagestream_tag=None):
     if dst_imagestream is None:
         dst_imagestream = src_imagestream
@@ -30,7 +30,7 @@ def wait_until_imagestream_tag_is_available(imagestream, imagestream_tag, projec
     max_retries = max_wait_time_in_seconds / retry_interval_in_seconds
     current_retry_count = 1
     while current_retry_count < max_retries:
-        if does_imagestream_tag_exist(imagestream, imagestream_tag, project_name) == True:
+        if does_imagestream_tag_exist(imagestream, imagestream_tag, project_name):
             return
         else:
             current_retry_count += 1
@@ -41,6 +41,7 @@ def does_imagestream_tag_exist(imagestream, imagestream_tag, project_name):
     try:
         execute_shell_command('oc get istag {}:{} -n {}'.format(imagestream, imagestream_tag, project_name))
         return True
+    # TODO better error handling here
     except subprocess.CalledProcessError as e:
         return False
 
@@ -55,7 +56,7 @@ def does_service_account_exist(service_account_name, project_name):
     try:
         execute_shell_command('oc get sa {} -n {}'.format(service_account_name, project_name))
         return True
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         return False
 
 
@@ -104,3 +105,67 @@ def create_nodejs_example_app(project_name):
 
 def execute_shell_command(command):
     return subprocess.check_output(command, shell=True)
+
+
+######################################################################
+# Ansible
+######################################################################
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            src_project_name=dict(required=True),
+            src_imagestream=dict(required=True),
+            src_imagestream_tag=dict(required=True),
+            dst_project_name=dict(required=True),
+            dst_imagestream=dict(required=False, default=None),
+            dst_imagestream_tag=dict(required=False, default=None),
+            max_wait_time_in_seconds=dict(required=False, default=300, type='int'),
+            retry_interval_in_seconds=dict(required=False, default=5, type='int'),
+            wait_for_imagestream_tag_to_be_available=dict(required=False, default=True)
+        )
+    )
+
+    # retrieve params
+    params = module.params
+    src_project_name = params['src_project_name']
+    src_imagestream = params['src_imagestream']
+    src_imagestream_tag = params['src_imagestream_tag']
+    dst_project_name = params['dst_project_name']
+    dst_imagestream = params['dst_imagestream']
+    dst_imagestream_tag = params['dst_imagestream_tag']
+    max_wait_time_in_seconds = params['max_wait_time_in_seconds']
+    retry_interval_in_seconds = params['retry_interval_in_seconds']
+    wait_for_imagestream_tag_to_be_available = params['wait_for_imagestream_tag_to_be_available']
+
+    # sensible defaults duplicated here to be available for exit_json
+    if dst_imagestream is None:
+        dst_imagestream = src_imagestream
+
+    if dst_imagestream_tag is None:
+        dst_imagestream_tag = src_imagestream_tag
+
+    # actual logic execution
+    # TODO better error handling here
+    if wait_for_imagestream_tag_to_be_available:
+        wait_until_imagestream_tag_is_available(src_imagestream, src_imagestream_tag, src_project_name, max_wait_time_in_seconds, retry_interval_in_seconds)
+
+    # TODO better error handling here
+    promote_image(src_project_name, src_imagestream, src_imagestream_tag, dst_project_name, dst_imagestream, dst_imagestream_tag)
+
+    module.exit_json(changed=True,
+                     src_project_name=src_project_name,
+                     src_imagestream=src_imagestream,
+                     src_imagestream_tag=src_imagestream_tag,
+                     dst_project_name=dst_project_name,
+                     dst_imagestream=dst_imagestream,
+                     dst_imagestream_tag=dst_imagestream_tag,
+                     max_wait_time_in_seconds=max_wait_time_in_seconds,
+                     retry_interval_in_seconds=retry_interval_in_seconds,
+                     wait_for_imagestream_tag_to_be_available=wait_for_imagestream_tag_to_be_available
+                     )
+
+
+if __name__ == '__main__':
+    main()
