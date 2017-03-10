@@ -7,6 +7,12 @@ from ansible.module_utils.basic import *
 ######################################################################
 
 
+def promote_image_when_available(src_project_name, src_imagestream, src_imagestream_tag, dst_project_name, dst_imagestream=None, dst_imagestream_tag=None, max_wait_time_in_seconds=300, retry_interval_in_seconds=5):
+    if does_project_exist(src_project_name) and does_project_exist(dst_project_name) and does_imagestream_exist(src_imagestream, src_project_name):
+        wait_until_imagestream_tag_is_available(src_imagestream, src_imagestream_tag, src_project_name, max_wait_time_in_seconds, retry_interval_in_seconds)
+        promote_image(src_project_name, src_imagestream, src_imagestream_tag, dst_project_name, dst_imagestream, dst_imagestream_tag)
+
+
 # TODO return whether image was tagged or not?
 def promote_image(src_project_name, src_imagestream, src_imagestream_tag, dst_project_name, dst_imagestream=None, dst_imagestream_tag=None):
     if dst_imagestream is None:
@@ -41,9 +47,24 @@ def does_imagestream_tag_exist(imagestream, imagestream_tag, project_name):
     try:
         execute_shell_command('oc get istag {}:{} -n {}'.format(imagestream, imagestream_tag, project_name))
         return True
-    # TODO better error handling here
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         return False
+
+
+def does_project_exist(project_name):
+    try:
+        execute_shell_command('oc get project {}'.format(project_name))
+        return True
+    except subprocess.CalledProcessError as e:
+        raise e
+
+
+def does_imagestream_exist(imagestream, project_name):
+    try:
+        execute_shell_command('oc get is {} -n {}'.format(imagestream, project_name))
+        return True
+    except subprocess.CalledProcessError as e:
+        raise e
 
 ######################################################################
 # Service Account
@@ -104,7 +125,8 @@ def create_nodejs_example_app(project_name):
 
 
 def execute_shell_command(command):
-    return subprocess.check_output(command, shell=True)
+    command_list = command.split()
+    return subprocess.check_output(command_list, stderr=subprocess.STDOUT)
 
 
 ######################################################################
@@ -122,8 +144,7 @@ def main():
             dst_imagestream=dict(required=False, default=None),
             dst_imagestream_tag=dict(required=False, default=None),
             max_wait_time_in_seconds=dict(required=False, default=300, type='int'),
-            retry_interval_in_seconds=dict(required=False, default=5, type='int'),
-            wait_for_imagestream_tag_to_be_available=dict(required=False, default=True)
+            retry_interval_in_seconds=dict(required=False, default=5, type='int')
         )
     )
 
@@ -137,7 +158,6 @@ def main():
     dst_imagestream_tag = params['dst_imagestream_tag']
     max_wait_time_in_seconds = params['max_wait_time_in_seconds']
     retry_interval_in_seconds = params['retry_interval_in_seconds']
-    wait_for_imagestream_tag_to_be_available = params['wait_for_imagestream_tag_to_be_available']
 
     # sensible defaults duplicated here to be available for exit_json
     if dst_imagestream is None:
@@ -147,12 +167,10 @@ def main():
         dst_imagestream_tag = src_imagestream_tag
 
     # actual logic execution
-    # TODO better error handling here
-    if wait_for_imagestream_tag_to_be_available:
-        wait_until_imagestream_tag_is_available(src_imagestream, src_imagestream_tag, src_project_name, max_wait_time_in_seconds, retry_interval_in_seconds)
-
-    # TODO better error handling here
-    promote_image(src_project_name, src_imagestream, src_imagestream_tag, dst_project_name, dst_imagestream, dst_imagestream_tag)
+    try:
+        promote_image_when_available(src_project_name, src_imagestream, src_imagestream_tag, dst_project_name, dst_imagestream, dst_imagestream_tag, max_wait_time_in_seconds, retry_interval_in_seconds)
+    except subprocess.CalledProcessError as e:
+        module.fail_json(msg=e.output)
 
     module.exit_json(changed=True,
                      src_project_name=src_project_name,
@@ -162,8 +180,7 @@ def main():
                      dst_imagestream=dst_imagestream,
                      dst_imagestream_tag=dst_imagestream_tag,
                      max_wait_time_in_seconds=max_wait_time_in_seconds,
-                     retry_interval_in_seconds=retry_interval_in_seconds,
-                     wait_for_imagestream_tag_to_be_available=wait_for_imagestream_tag_to_be_available
+                     retry_interval_in_seconds=retry_interval_in_seconds
                      )
 
 
