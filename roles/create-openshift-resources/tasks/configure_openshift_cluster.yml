@@ -82,15 +82,10 @@
   - oc_login|bool == True
 
 - name: "Fail for Missing OpenShift Host Env"
-<<<<<<< a7a49944493f0831529c8d3f726be3f11b06ab87
-  fail: msg="This role requires openshift_cluster.openshift_host_env (in the API document) or openshift_url (via CLI or host vars) to be set and non empty"
-  when: openshift_resources_present == true and openshift_login_url == ""
-=======
   fail: msg="This role requires openshift_cluster.openshift_host_env to be set and non empty"
   when:
   - openshift_resources_present|bool == True
   - openshift_cluster.openshift_host_env is not defined or openshift_cluster.openshift_host_env|trim == ""
->>>>>>> Updated logic to ensure correct boolean checks
 
 - name: "Log in to OpenShift Client"
   command: >
