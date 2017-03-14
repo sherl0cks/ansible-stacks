@@ -26,7 +26,7 @@ def create_env_string(key_value_pairs):
     pairs = []
     string = ""
     for key in key_value_pairs:
-        pair = key + '=' + key_value_pairs[key]
+        pair = "\"" + key + '=' + key_value_pairs[key] + "\""
         pairs.append(pair)
     for i, pair in enumerate(pairs):
         string += ' -e ' + pair

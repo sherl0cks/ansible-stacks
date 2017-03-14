@@ -6,8 +6,7 @@
       "openshift_resources": {
         "projects": [
           {
-            "name": "template-dev",
-            "display_name": "Jenkins Template - Dev",
+            "name": "template-dev-ci",
             "environment_type": "build",
             "templates": [
               {
