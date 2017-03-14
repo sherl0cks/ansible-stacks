@@ -15,10 +15,10 @@ def create_param_string(key_value_pairs):
     pairs = []
     string = ""
     for key in key_value_pairs:
-        pair = key + '=' + key_value_pairs[key]
+        pair = "\"{}={}\"".format(key, key_value_pairs[key])
         pairs.append(pair)
     for i, pair in enumerate(pairs):
-        string += ' -p ' + pair
+        string += " -p {}".format(pair)
     return string
 
 
@@ -26,10 +26,10 @@ def create_env_string(key_value_pairs):
     pairs = []
     string = ""
     for key in key_value_pairs:
-        pair = "\"" + key + '=' + key_value_pairs[key] + "\""
+        pair = "\"{}={}\"".format(key, key_value_pairs[key])
         pairs.append(pair)
     for i, pair in enumerate(pairs):
-        string += ' -e ' + pair
+        string += " -e {}".format(pair)
     return string
 
 

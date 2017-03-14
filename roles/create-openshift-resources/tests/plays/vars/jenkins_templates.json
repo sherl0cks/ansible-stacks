@@ -35,7 +35,7 @@
             ]
           },
           {
-            "name": "template-uat",
+            "name": "template-uat-ci",
             "display_name": "Jenkins Template - UAT",
             "environment_type": "promotion",
             "templates": [

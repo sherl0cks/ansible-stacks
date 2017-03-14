@@ -25,7 +25,8 @@
                   "POSTGRESQL_USER": "autoautoauto",
                   "POSTGRESQL_PASSWORD": "password",
                   "POSTGRESQL_DATABASE": "automation",
-                  "FOO" : "this is a test for make sure env vars like JAVA_OPTS work with quotes"
+                  "FOO" : "this is a test for make sure env vars like JAVA_OPTS work with quotes",
+                  "BAR" : true
                 },
                 "routes": [
                   {
